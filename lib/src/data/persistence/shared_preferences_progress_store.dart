@@ -2,8 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'local_progress_repository.dart';
 
-final class SharedPreferencesProgressStore
-    implements ProgressDocumentStore {
+final class SharedPreferencesProgressStore implements ProgressDocumentStore {
   SharedPreferencesProgressStore({
     this.storageKey = 'digitavox.student_progress',
     SharedPreferencesAsync? preferences,

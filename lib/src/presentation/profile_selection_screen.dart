@@ -13,12 +13,10 @@ final class ProfileSelectionScreen extends StatefulWidget {
   final ValueChanged<StudentProfile> onProfileSelected;
 
   @override
-  State<ProfileSelectionScreen> createState() =>
-      _ProfileSelectionScreenState();
+  State<ProfileSelectionScreen> createState() => _ProfileSelectionScreenState();
 }
 
-final class _ProfileSelectionScreenState
-    extends State<ProfileSelectionScreen> {
+final class _ProfileSelectionScreenState extends State<ProfileSelectionScreen> {
   final controller = TextEditingController();
 
   List<StudentProfile> _profiles = const [];
@@ -50,62 +48,103 @@ final class _ProfileSelectionScreenState
   }
 
   Future<void> _createProfile() async {
-
-  final name = await showDialog<String>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: const Text('Criar perfil'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        textCapitalization: TextCapitalization.words,
-        decoration: const InputDecoration(
-          labelText: 'Nome',
-          hintText: 'Digite seu nome',
-        ),
-        onSubmitted: (value) {
-          Navigator.of(dialogContext).pop(value);
-        },
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(dialogContext).pop(controller.text);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Criar perfil'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          decoration: const InputDecoration(
+            labelText: 'Nome',
+            hintText: 'Digite seu nome',
+          ),
+          onSubmitted: (value) {
+            Navigator.of(dialogContext).pop(value);
           },
-          child: const Text('Criar'),
         ),
-      ],
-    ),
-  );
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop(controller.text);
+            },
+            child: const Text('Criar'),
+          ),
+        ],
+      ),
+    );
 
-  if (!mounted || name == null || name.trim().isEmpty) return;
+    if (!mounted || name == null || name.trim().isEmpty) return;
 
-  try {
-    final profile = await widget.profileRepository.createProfile(name);
+    try {
+      final profile = await widget.profileRepository.createProfile(name);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _profiles = [..._profiles, profile];
-    });
+      setState(() {
+        _profiles = [..._profiles, profile];
+      });
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        widget.onProfileSelected(profile);
-      }
-    });
-  } on ArgumentError catch (error) {
-    if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.onProfileSelected(profile);
+        }
+      });
+    } on ArgumentError catch (error) {
+      if (!mounted) return;
 
-    setState(() {
-      _errorMessage = error.message.toString();
-    });
+      setState(() {
+        _errorMessage = error.message.toString();
+      });
+    }
   }
-}
+
+  Future<void> _confirmDelete(StudentProfile profile) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Excluir perfil?'),
+        content: Text(
+          'O perfil de ${profile.name} e seu progresso serão excluídos.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Excluir'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || confirmed != true) return;
+
+    try {
+      await widget.profileRepository.deleteProfile(profile.id);
+
+      if (!mounted) return;
+
+      setState(() {
+        _profiles = _profiles
+            .where((item) => item.id != profile.id)
+            .toList(growable: false);
+      });
+    } on Object {
+      if (!mounted) return;
+
+      setState(() {
+        _errorMessage = 'Não foi possível excluir o perfil.';
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -116,9 +155,7 @@ final class _ProfileSelectionScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Quem vai aprender?'),
-      ),
+      appBar: AppBar(title: const Text('Quem vai aprender?')),
       body: SafeArea(
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -144,8 +181,16 @@ final class _ProfileSelectionScreenState
                     Card(
                       child: ListTile(
                         title: Text(profile.name),
-                        trailing: const Icon(Icons.arrow_forward),
                         onTap: () => widget.onProfileSelected(profile),
+                        trailing: Semantics(
+                          button: true,
+                          label: 'Excluir perfil de ${profile.name}',
+                          child: IconButton(
+                            icon: const Icon(Icons.delete_outline),
+                            tooltip: 'Excluir perfil de ${profile.name}',
+                            onPressed: () => _confirmDelete(profile),
+                          ),
+                        ),
                       ),
                     ),
                   const SizedBox(height: 16),

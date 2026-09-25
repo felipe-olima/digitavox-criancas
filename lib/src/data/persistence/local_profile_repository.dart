@@ -36,7 +36,6 @@ final class LocalProfileRepository implements ProfileRepository {
     }
   }
 
-
   @override
   Future<StudentProfile> createProfile(String name) async {
     final normalizedName = name.trim();
@@ -62,9 +61,22 @@ final class LocalProfileRepository implements ProfileRepository {
   }
 
   @override
-  ProgressRepository progressFor(StudentProfile profile) {
-    return LocalProgressRepository(
-      store: progressStoreFor(profile.id),
+  Future<void> deleteProfile(String profileId) async {
+    final profiles = await loadProfiles();
+    final remaining = profiles
+        .where((profile) => profile.id != profileId)
+        .toList(growable: false);
+
+    await profilesStore.write(
+      jsonEncode([
+        for (final profile in remaining)
+          {'id': profile.id, 'name': profile.name},
+      ]),
     );
+  }
+
+  @override
+  ProgressRepository progressFor(StudentProfile profile) {
+    return LocalProgressRepository(store: progressStoreFor(profile.id));
   }
 }

@@ -31,8 +31,9 @@ final class _DigitavoxAppState extends State<DigitavoxApp> {
   AppThemePreference _themePreference = AppThemePreference.standard;
   StudentProfile? _selectedProfile;
 
-  late final CourseAudioOrchestrator _courseAudio =
-      CourseAudioOrchestrator(audioGuidance: widget.audioGuidance);
+  late final CourseAudioOrchestrator _courseAudio = CourseAudioOrchestrator(
+    audioGuidance: widget.audioGuidance,
+  );
 
   void _selectProfile(StudentProfile profile) {
     setState(() {
@@ -63,8 +64,7 @@ final class _DigitavoxAppState extends State<DigitavoxApp> {
             )
           : CourseHomeScreen(
               courseCatalog: widget.courseCatalog,
-              progressRepository:
-                  widget.profileRepository.progressFor(profile),
+              progressRepository: widget.profileRepository.progressFor(profile),
               courseAudio: _courseAudio,
               onThemePreferenceChanged: (preference) {
                 setState(() => _themePreference = preference);
