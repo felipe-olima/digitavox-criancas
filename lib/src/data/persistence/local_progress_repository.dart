@@ -1,3 +1,4 @@
+
 import '../../domain/progress/progress_repository.dart';
 import '../../domain/progress/student_progress.dart';
 import 'student_progress_codec.dart';
@@ -30,7 +31,7 @@ final class LocalProgressRepository implements ProgressRepository {
       return const StudentProgress();
     }
   }
-
+  
   @override
   Future<void> save(StudentProgress progress) =>
       store.write(codec.encode(progress));
